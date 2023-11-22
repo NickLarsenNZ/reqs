@@ -1,0 +1,20 @@
+# this serves as the base URL for all requests unless a new scheme or hostname is supplied to the request
+baseUrl: http://localhost:3000
+
+max_parallel: 2
+
+# reqs are a list of unordered request objects
+# they will all run in parallel (up to max_parallel), unless they depend on another request
+reqs:
+- GET: / # case does not matter for methods (upper case can draw attention to the eye better)
+  print: # if print is empty, it will simply print the ${{ res.body }} as it comes in, no formatting
+
+- id: get_token
+  post: /oauth2/token
+  body_json: # body_json will automatically set the Content-Type and Accept headers to application/json unless you override them
+    audience: xyz
+    client_id: xyz
+    client_secret: xyz
+    grant_type: client_credentials
+  print:
+
