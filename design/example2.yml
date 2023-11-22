@@ -1,0 +1,55 @@
+# this serves as the base URL for all requests unless a new scheme or hostname is supplied to the request
+baseUrl: http://localhost:8080
+
+max_parallel: 2
+
+# reqs are a list of unordered request objects
+# they will all run in parallel (up to max_parallel), unless they depend on another request
+reqs:
+- GET: / # case does not matter for methods (upper case can draw attention to the eye better)
+  print: # if print is empty, it will simply print the ${{ res.body }} as it comes in, no formatting
+
+- id: get_token
+  post: /oauth2/token
+  body_json: # body_json will automatically set the Content-Type and Accept headers to application/json unless you override them
+    client_id: xyz
+    client_secret: xyz
+    grant_type: client_credentials
+  outputs: # you can define outputs to make it easier for other requests to access data
+    status_code: ${{ res.status_code }}
+    token: ${{ res.body | json | .access_token }} # todo: define the templating syntax
+
+- get: /resource
+  depends_on: [get_token] # optional, but allows you to force a request to happen after another even if it doesn't require outputs from it
+  if: ${{ get_token.res.status_code == 200 }} # you can directly access a requests's response object
+  headers:
+    Authorization: Bearer ${{ get_token.outputs.token }} # or you can quickly access the defined outputs
+
+- print: ${{ get_token.res.body | json }} # todo decide on whether piping to json is for formatting or data access
+  if: ${{ get_token.status_code != 200 }}
+
+# ┌────────────────┐
+# │                │
+# │                │
+# │ first request  │
+# │                │
+# └────────────────┘
+#
+#
+#
+# ┌────────────────┐              ┌────────────────┐
+# │                │              │                │
+# │                ├─────┬───────►│                │
+# │ get_token      │     │        │ if 200         │
+# │                │     │        │                │
+# └────────────────┘     │        └────────────────┘
+#                        │
+#                        │
+#                        │
+#                        │        ┌────────────────┐
+#                        │        │                │
+#                        └───────►│                │
+#                                 │ if not 200     │
+#                                 │                │
+#                                 └────────────────┘
+#
