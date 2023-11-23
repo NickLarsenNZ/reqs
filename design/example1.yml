@@ -1,5 +1,5 @@
 # this serves as the base URL for all requests unless a new scheme or hostname is supplied to the request
-baseUrl: http://localhost:3000
+base_url: http://localhost:3000
 
 max_parallel: 2
 
